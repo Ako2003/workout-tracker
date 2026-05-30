@@ -1,172 +1,152 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Dumbbell } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Plus,
+  Dumbbell,
+  Calendar,
+  ChevronRight,
+  CalendarPlus,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ExercisePicker } from "@/components/workout/ExercisePicker";
-import { ExerciseItem } from "@/components/workout/ExerciseItem";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatWeight } from "@/lib/utils";
 
-interface Exercise {
-  id: string;
-  name: string;
-  muscleGroup: string;
-}
-
-interface Set {
-  id: string;
-  setNumber: number;
-  reps: number;
-  weight: number;
-  exerciseId: string;
-}
-
-interface WorkoutExercise {
-  exercise: Exercise;
-  sets: Set[];
-}
-
-interface Session {
+interface SessionItem {
   id: string;
   date: string;
   notes: string | null;
-  exercises: WorkoutExercise[];
+  exerciseCount: number;
+  totalVolume: number;
+  totalSets: number;
+  sets: {
+    exercise: { name: string; muscleGroup: string };
+  }[];
+}
+
+function toDateInputValue(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function sameLocalDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 export default function WorkoutPage() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const router = useRouter();
   const { showToast } = useToast();
+  const [sessions, setSessions] = useState<SessionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [creatingToday, setCreatingToday] = useState(false);
+  const [isPastOpen, setIsPastOpen] = useState(false);
+  const [pastDate, setPastDate] = useState(toDateInputValue(new Date()));
+  const [creatingPast, setCreatingPast] = useState(false);
 
-  const fetchSession = useCallback(async () => {
+  const fetchSessions = useCallback(async (offset = 0) => {
     try {
-      const res = await fetch("/api/sessions/today");
+      const res = await fetch(`/api/sessions?limit=15&offset=${offset}`);
       const data = await res.json();
-      setSession(data.session);
+      if (offset === 0) {
+        setSessions(data.sessions);
+      } else {
+        setSessions((prev) => [...prev, ...data.sessions]);
+      }
+      setHasMore(data.hasMore);
     } catch (error) {
-      console.error("Failed to fetch session:", error);
-      showToast("Failed to load workout", "error");
+      console.error("Failed to fetch sessions:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [showToast]);
+  }, []);
 
   useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
+    fetchSessions();
+  }, [fetchSessions]);
 
-  const startWorkout = async () => {
+  const today = new Date();
+  const todaySession =
+    sessions.find((s) => sameLocalDay(new Date(s.date), today)) ?? null;
+  const pastSessions = sessions.filter(
+    (s) => !sameLocalDay(new Date(s.date), today)
+  );
+
+  const startToday = async () => {
+    setCreatingToday(true);
     try {
       const res = await fetch("/api/sessions/today", { method: "POST" });
       const data = await res.json();
-      setSession(data.session);
-      showToast("Workout started! Let's go!", "success");
+      if (data?.session?.id) {
+        router.push(`/workout/${data.session.id}`);
+      } else {
+        showToast("Failed to start workout", "error");
+      }
     } catch (error) {
       console.error("Failed to start workout:", error);
       showToast("Failed to start workout", "error");
+    } finally {
+      setCreatingToday(false);
     }
   };
 
-  const handleAddExercise = async (exercise: Exercise) => {
-    if (!session) return;
-
+  const createPastWorkout = async () => {
+    if (!pastDate) return;
+    setCreatingPast(true);
     try {
-      const res = await fetch("/api/sets", {
+      const res = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: session.id,
-          exerciseId: exercise.id,
-          reps: 0,
-          weight: 0,
-        }),
+        body: JSON.stringify({ date: pastDate }),
       });
-
-      if (res.ok) {
-        fetchSession();
-        showToast(`Added ${exercise.name}`, "success");
+      const data = await res.json();
+      if (res.status === 409 && data?.session?.id) {
+        // Already exists — just navigate to it.
+        setIsPastOpen(false);
+        router.push(`/workout/${data.session.id}`);
+        return;
       }
-    } catch (error) {
-      console.error("Failed to add exercise:", error);
-      showToast("Failed to add exercise", "error");
-    }
-  };
-
-  const handleAddSet = async (exerciseId: string) => {
-    if (!session) return;
-
-    try {
-      const res = await fetch("/api/sets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: session.id,
-          exerciseId,
-          reps: 0,
-          weight: 0,
-        }),
-      });
-
-      if (res.ok) {
-        fetchSession();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to create workout");
       }
+      setIsPastOpen(false);
+      router.push(`/workout/${data.id}`);
     } catch (error) {
-      console.error("Failed to add set:", error);
-      showToast("Failed to add set", "error");
+      console.error("Failed to create past workout:", error);
+      showToast("Failed to create workout", "error");
+    } finally {
+      setCreatingPast(false);
     }
   };
 
-  const handleUpdateSet = async (setId: string, reps: number, weight: number) => {
+  const deleteSession = async (id: string) => {
+    if (!confirm("Delete this workout?")) return;
     try {
-      await fetch(`/api/sets/${setId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reps, weight }),
-      });
-      fetchSession();
+      await fetch(`/api/sessions/${id}`, { method: "DELETE" });
+      setSessions((prev) => prev.filter((s) => s.id !== id));
     } catch (error) {
-      console.error("Failed to update set:", error);
-      showToast("Failed to save", "error");
+      console.error("Failed to delete session:", error);
+      showToast("Failed to delete workout", "error");
     }
   };
 
-  const handleDeleteSet = async (setId: string) => {
-    try {
-      await fetch(`/api/sets/${setId}`, { method: "DELETE" });
-      fetchSession();
-      showToast("Set deleted", "info");
-    } catch (error) {
-      console.error("Failed to delete set:", error);
-      showToast("Failed to delete set", "error");
-    }
-  };
-
-  const handleRemoveExercise = async (exerciseId: string) => {
-    if (!session) return;
-
-    const exerciseData = (session.exercises || []).find(
-      (e) => e.exercise.id === exerciseId
-    );
-    if (!exerciseData) return;
-
-    try {
-      await Promise.all(
-        exerciseData.sets.map((set) =>
-          fetch(`/api/sets/${set.id}`, { method: "DELETE" })
-        )
-      );
-      fetchSession();
-      showToast(`Removed ${exerciseData.exercise.name}`, "info");
-    } catch (error) {
-      console.error("Failed to remove exercise:", error);
-      showToast("Failed to remove exercise", "error");
-    }
-  };
-
-  const handleNewPR = (exerciseName: string, weight: number) => {
-    showToast(`NEW PR! ${exerciseName}: ${weight}kg`, "pr");
+  const loadMore = () => {
+    setLoadingMore(true);
+    fetchSessions(sessions.length);
   };
 
   if (loading) {
@@ -174,86 +154,234 @@ export default function WorkoutPage() {
       <div className="p-4 max-w-lg mx-auto space-y-4">
         <div className="h-8 w-48 bg-background-secondary rounded animate-pulse" />
         <div className="h-32 bg-background-secondary rounded-xl animate-pulse" />
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="h-24 bg-background-secondary rounded-xl animate-pulse"
+          />
+        ))}
       </div>
     );
   }
-
-  if (!session) {
-    return (
-      <div className="p-4 max-w-lg mx-auto">
-        <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-accent-muted mb-6">
-            <Dumbbell className="w-10 h-10 text-accent" />
-          </div>
-          <h1 className="text-2xl font-bold font-display mb-2">
-            Start Today&apos;s Workout
-          </h1>
-          <p className="text-foreground-muted mb-6">
-            {formatDate(new Date())}
-          </p>
-          <Button size="lg" onClick={startWorkout}>
-            <Plus className="w-5 h-5 mr-2" />
-            Start Workout
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const exercises = session.exercises || [];
-  const existingExerciseIds = exercises.map((e) => e.exercise.id);
 
   return (
-    <div className="p-4 max-w-lg mx-auto space-y-4">
+    <div className="p-4 max-w-lg mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold font-display">Today&apos;s Workout</h1>
+          <h1 className="text-xl font-bold font-display">Workouts</h1>
           <p className="text-sm text-foreground-muted">
-            {formatDate(new Date(session.date))}
+            All your training sessions
           </p>
         </div>
-        <Button onClick={() => setIsPickerOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Exercise
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setPastDate(toDateInputValue(new Date()));
+            setIsPastOpen(true);
+          }}
+        >
+          <CalendarPlus className="w-4 h-4 mr-1" />
+          Log past
         </Button>
       </div>
 
-      {/* Exercises */}
-      {exercises.length === 0 ? (
-        <div className="text-center py-12 bg-background-secondary rounded-xl">
-          <Dumbbell className="w-12 h-12 text-foreground-subtle mx-auto mb-3" />
-          <p className="text-foreground-muted mb-4">No exercises yet</p>
-          <Button variant="secondary" onClick={() => setIsPickerOpen(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            Add Exercise
+      {/* Today */}
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider px-1">
+          Today · {formatDate(today)}
+        </h2>
+        {todaySession ? (
+          <TodayCard
+            session={todaySession}
+            onOpen={() => router.push(`/workout/${todaySession.id}`)}
+          />
+        ) : (
+          <Card>
+            <CardContent className="flex items-center justify-between gap-3 py-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center flex-shrink-0">
+                  <Dumbbell className="w-5 h-5 text-accent" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold">No workout yet today</p>
+                  <p className="text-xs text-foreground-muted">
+                    Tap start to begin logging
+                  </p>
+                </div>
+              </div>
+              <Button onClick={startToday} isLoading={creatingToday}>
+                <Plus className="w-4 h-4 mr-1" />
+                Start
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* Past workouts */}
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold text-foreground-muted uppercase tracking-wider px-1">
+          Past Workouts
+        </h2>
+        {pastSessions.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <Calendar className="w-10 h-10 text-foreground-subtle mx-auto mb-2" />
+              <p className="text-sm text-foreground-muted">
+                No past workouts yet. Your history will appear here.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {pastSessions.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                onDelete={() => deleteSession(session.id)}
+              />
+            ))}
+            {hasMore && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={loadMore}
+                isLoading={loadingMore}
+              >
+                Load More
+              </Button>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Log past workout modal */}
+      <Modal
+        isOpen={isPastOpen}
+        onClose={() => setIsPastOpen(false)}
+        title="Log a past workout"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-foreground-muted">
+            Pick the date you trained on. You can add exercises and sets after.
+          </p>
+          <Input
+            label="Date"
+            type="date"
+            value={pastDate}
+            max={toDateInputValue(new Date())}
+            onChange={(e) => setPastDate(e.target.value)}
+          />
+          <Button
+            fullWidth
+            onClick={createPastWorkout}
+            isLoading={creatingPast}
+            disabled={!pastDate}
+          >
+            Open workout
           </Button>
         </div>
-      ) : (
-        <div className="space-y-3">
-          {exercises.map(({ exercise, sets }) => (
-            <ExerciseItem
-              key={exercise.id}
-              exercise={exercise}
-              sets={sets}
-              sessionId={session.id}
-              onAddSet={handleAddSet}
-              onUpdateSet={handleUpdateSet}
-              onDeleteSet={handleDeleteSet}
-              onRemoveExercise={handleRemoveExercise}
-              onNewPR={handleNewPR}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Exercise Picker Modal */}
-      <ExercisePicker
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        onSelect={handleAddExercise}
-        excludeIds={existingExerciseIds}
-      />
+      </Modal>
     </div>
+  );
+}
+
+function TodayCard({
+  session,
+  onOpen,
+}: {
+  session: SessionItem;
+  onOpen: () => void;
+}) {
+  const names = [...new Set(session.sets.map((s) => s.exercise.name))];
+  return (
+    <Card padding="none">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="w-full text-left flex items-center justify-between p-4 hover:bg-background-tertiary/50 transition-colors"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center flex-shrink-0">
+              <Dumbbell className="w-5 h-5 text-accent" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold">Continue today&apos;s workout</p>
+              <p className="text-xs text-foreground-muted truncate">
+                {session.exerciseCount} exercises · {session.totalSets} sets ·{" "}
+                {formatWeight(session.totalVolume)} kg vol
+              </p>
+              {names.length > 0 && (
+                <p className="text-xs text-foreground-subtle truncate mt-0.5">
+                  {names.slice(0, 3).join(", ")}
+                  {names.length > 3 && ` +${names.length - 3} more`}
+                </p>
+              )}
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-foreground-muted flex-shrink-0 ml-2" />
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SessionCard({
+  session,
+  onDelete,
+}: {
+  session: SessionItem;
+  onDelete: () => void;
+}) {
+  const names = [...new Set(session.sets.map((s) => s.exercise.name))];
+  return (
+    <Card padding="none">
+      <CardContent className="p-0">
+        <Link
+          href={`/workout/${session.id}`}
+          className="flex items-center justify-between p-4 hover:bg-background-tertiary/50 transition-colors"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Calendar className="w-4 h-4 text-accent" />
+              <span className="font-semibold">
+                {formatDate(new Date(session.date))}
+              </span>
+            </div>
+            <p className="text-sm text-foreground-muted truncate">
+              {names.length > 0
+                ? `${names.slice(0, 3).join(", ")}${
+                    names.length > 3 ? ` +${names.length - 3} more` : ""
+                  }`
+                : "No exercises logged"}
+            </p>
+            <div className="flex items-center gap-4 mt-2 text-xs text-foreground-subtle">
+              <span className="flex items-center gap-1">
+                <Dumbbell className="w-3 h-3" />
+                {session.exerciseCount} exercises
+              </span>
+              <span>{session.totalSets} sets</span>
+              <span>{formatWeight(session.totalVolume)} kg vol</span>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-foreground-muted flex-shrink-0 ml-2" />
+        </Link>
+        <div className="border-t border-border px-4 py-2 flex justify-end">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete();
+            }}
+            title="Delete workout"
+            className="p-1.5 rounded text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

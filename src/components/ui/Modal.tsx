@@ -41,19 +41,20 @@ export function Modal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal Content */}
       <div
         className={cn(
-          "relative w-full max-w-lg max-h-[85vh] bg-background-secondary rounded-t-2xl sm:rounded-2xl",
-          "animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200",
-          "flex flex-col",
+          "relative w-full max-w-lg my-auto bg-background-secondary rounded-2xl",
+          "max-h-[calc(100dvh-2rem)]",
+          "animate-in fade-in zoom-in-95 duration-200",
+          "flex flex-col shadow-2xl",
           className
         )}
       >

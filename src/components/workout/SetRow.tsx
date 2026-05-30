@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Trash2, Check, Copy } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ interface SetRowProps {
   suggestedWeight?: number;
 }
 
+const displayValue = (v: number) => (v === 0 ? "" : v.toString());
+
 export function SetRow({
   setNumber,
   reps,
@@ -26,15 +28,21 @@ export function SetRow({
   suggestedReps,
   suggestedWeight,
 }: SetRowProps) {
-  const [localReps, setLocalReps] = useState(reps.toString());
-  const [localWeight, setLocalWeight] = useState(weight.toString());
+  const [localReps, setLocalReps] = useState(displayValue(reps));
+  const [localWeight, setLocalWeight] = useState(displayValue(weight));
   const [isEditing, setIsEditing] = useState(isNew);
+  const repsFocused = useRef(false);
+  const weightFocused = useRef(false);
 
-  // Update local state when props change
+  // Only sync from props when the user is not actively editing that field,
+  // so a re-render mid-typing never wipes out unsaved input.
   useEffect(() => {
-    setLocalReps(reps.toString());
-    setLocalWeight(weight.toString());
-  }, [reps, weight]);
+    if (!repsFocused.current) setLocalReps(displayValue(reps));
+  }, [reps]);
+
+  useEffect(() => {
+    if (!weightFocused.current) setLocalWeight(displayValue(weight));
+  }, [weight]);
 
   const handleSave = () => {
     const newReps = parseInt(localReps) || 0;
@@ -47,7 +55,7 @@ export function SetRow({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSave();
+      (e.target as HTMLInputElement).blur();
     }
   };
 
@@ -80,12 +88,20 @@ export function SetRow({
       <div className="flex-1 min-w-0">
         <Input
           type="number"
+          inputMode="numeric"
           value={localReps}
+          onFocus={(e) => {
+            repsFocused.current = true;
+            e.currentTarget.select();
+          }}
           onChange={(e) => {
             setLocalReps(e.target.value);
             setIsEditing(true);
           }}
-          onBlur={handleSave}
+          onBlur={() => {
+            repsFocused.current = false;
+            handleSave();
+          }}
           onKeyDown={handleKeyDown}
           placeholder={suggestedReps?.toString() || "0"}
           suffix="reps"
@@ -97,12 +113,20 @@ export function SetRow({
       <div className="flex-1 min-w-0">
         <Input
           type="number"
+          inputMode="decimal"
           value={localWeight}
+          onFocus={(e) => {
+            weightFocused.current = true;
+            e.currentTarget.select();
+          }}
           onChange={(e) => {
             setLocalWeight(e.target.value);
             setIsEditing(true);
           }}
-          onBlur={handleSave}
+          onBlur={() => {
+            weightFocused.current = false;
+            handleSave();
+          }}
           onKeyDown={handleKeyDown}
           placeholder={suggestedWeight?.toString() || "0"}
           suffix="kg"
@@ -115,6 +139,7 @@ export function SetRow({
       <div className="flex items-center gap-1 flex-shrink-0">
         {showCopyButton && (
           <button
+            type="button"
             onClick={handleCopyLast}
             className="p-2 rounded-lg text-foreground-muted hover:text-accent hover:bg-accent/10 transition-colors"
             title="Copy from last session"
@@ -124,14 +149,18 @@ export function SetRow({
         )}
         {isEditing ? (
           <button
+            type="button"
             onClick={handleSave}
+            title="Save set"
             className="p-2 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors"
           >
             <Check className="w-4 h-4" />
           </button>
         ) : (
           <button
+            type="button"
             onClick={onDelete}
+            title="Delete set"
             className="p-2 rounded-lg text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
