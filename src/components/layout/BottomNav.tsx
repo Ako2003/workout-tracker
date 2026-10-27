@@ -7,6 +7,7 @@ import {
   Dumbbell,
   ListChecks,
   Apple,
+  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/exercises", icon: ListChecks, label: "Exercises" },
   { href: "/workout", icon: Dumbbell, label: "Workout" },
   { href: "/food", icon: Apple, label: "Food" },
+  { href: "/plan", icon: Sparkles, label: "Plan" },
   { href: "/progress", icon: TrendingUp, label: "Progress" },
 ];
 

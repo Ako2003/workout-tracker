@@ -92,6 +92,7 @@ interface ScaledDay {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  isToday: boolean;
 }
 
 const SEX_OPTIONS: { value: Sex; label: string }[] = [
@@ -114,6 +115,23 @@ function todayLocalISO() {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+// Day names in the WEEKLY_PLAN are Monday..Sunday. getDay() is 0=Sun..6=Sat;
+// shift so Monday=0, Sunday=6.
+function todayPlanIndex(): number {
+  const js = new Date().getDay();
+  return js === 0 ? 6 : js - 1;
+}
+
+const DAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 export default function PlanPage() {
   const { showToast } = useToast();
@@ -203,8 +221,10 @@ export default function PlanPage() {
   const scaledPlan = useMemo<ScaledDay[] | null>(() => {
     if (!recommendation) return null;
     const factor = recommendation.kcal / BASE_DAILY_KCAL;
+    const todayIdx = todayPlanIndex();
+    const todayName = DAY_NAMES[todayIdx];
 
-    return WEEKLY_PLAN.map((day) => {
+    const scaled = WEEKLY_PLAN.map((day) => {
       const meals: ScaledMeal[] = MEAL_ORDER.map((mealKey) => {
         const items = (day.meals[mealKey] ?? []).map((it): ScaledPlanItem => {
           const food = foodByName.get(it.nameEn) ?? null;
@@ -230,8 +250,19 @@ export default function PlanPage() {
         (s, m) => s + m.items.reduce((ss, i) => ss + i.fatG, 0),
         0
       );
-      return { day: day.day, meals, kcal, proteinG, carbsG, fatG };
+      return {
+        day: day.day,
+        meals,
+        kcal,
+        proteinG,
+        carbsG,
+        fatG,
+        isToday: day.day === todayName,
+      };
     });
+
+    // Rotate so today's day appears first, then the rest of the week in order.
+    return [...scaled.slice(todayIdx), ...scaled.slice(0, todayIdx)];
   }, [recommendation, foodByName]);
 
   const saveProfileAndGoals = async (opts: {
@@ -669,10 +700,20 @@ function DayCard({
 }) {
   const diff = Math.round(day.kcal - targetKcal);
   return (
-    <Card padding="none">
+    <Card
+      padding="none"
+      className={cn(day.isToday && "ring-2 ring-accent/60")}
+    >
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <div>
-          <p className="font-semibold">{day.day}</p>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold">{day.day}</p>
+            {day.isToday && (
+              <span className="px-1.5 py-0.5 rounded bg-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider">
+                Today
+              </span>
+            )}
+          </div>
           <p className="text-xs text-foreground-muted">
             P {Math.round(day.proteinG)}g · C {Math.round(day.carbsG)}g · F{" "}
             {Math.round(day.fatG)}g
