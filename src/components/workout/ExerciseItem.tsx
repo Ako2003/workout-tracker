@@ -12,7 +12,10 @@ interface Set {
   setNumber: number;
   reps: number;
   weight: number;
+  notes: string | null;
 }
+
+type SetPatch = { reps?: number; weight?: number; notes?: string | null };
 
 interface LastPerformance {
   date: string;
@@ -38,7 +41,7 @@ interface ExerciseItemProps {
   lastPerformance: LastPerformance | null;
   personalRecord: PersonalRecord | null;
   onAddSet: (exerciseId: string) => void;
-  onUpdateSet: (setId: string, reps: number, weight: number) => void;
+  onUpdateSet: (setId: string, patch: SetPatch) => void;
   onDeleteSet: (setId: string) => void;
   onRemoveExercise: (exerciseId: string) => void;
   onNewPR?: (exerciseName: string, weight: number) => void;
@@ -164,7 +167,8 @@ export function ExerciseItem({
               setNumber={set.setNumber}
               reps={set.reps}
               weight={set.weight}
-              onUpdate={(reps, weight) => onUpdateSet(set.id, reps, weight)}
+              notes={set.notes}
+              onUpdate={(patch) => onUpdateSet(set.id, patch)}
               onDelete={() => onDeleteSet(set.id)}
               suggestedReps={lastPerformance?.sets[set.setNumber - 1]?.reps}
               suggestedWeight={lastPerformance?.sets[set.setNumber - 1]?.weight}

@@ -11,7 +11,6 @@ import {
   Apple,
   ChevronLeft,
   ChevronRight,
-  Flame,
   Plus,
   Search,
   Trash2,
@@ -21,7 +20,17 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { MacroRings } from "@/components/food/MacroRings";
+import { WaterTracker } from "@/components/food/WaterTracker";
 import { cn } from "@/lib/utils";
+
+interface ProfileGoals {
+  kcalGoal: number | null;
+  proteinGoal: number | null;
+  carbsGoal: number | null;
+  fatGoal: number | null;
+  waterGoalMl: number | null;
+}
 
 type Meal = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
 
@@ -90,6 +99,28 @@ export default function FoodPage() {
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addMeal, setAddMeal] = useState<Meal>("BREAKFAST");
+  const [goals, setGoals] = useState<ProfileGoals>({
+    kcalGoal: null,
+    proteinGoal: null,
+    carbsGoal: null,
+    fatGoal: null,
+    waterGoalMl: null,
+  });
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => {
+        setGoals({
+          kcalGoal: d.kcalGoal,
+          proteinGoal: d.proteinGoal,
+          carbsGoal: d.carbsGoal,
+          fatGoal: d.fatGoal,
+          waterGoalMl: d.waterGoalMl,
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -231,28 +262,15 @@ export default function FoodPage() {
         </button>
       </div>
 
-      {/* Totals */}
+      {/* Macro rings vs daily goals */}
       <Card>
-        <CardContent className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-            <Flame className="w-6 h-6 text-orange-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-2xl font-bold font-display">
-              {Math.round(totals.calories)}
-              <span className="text-sm font-medium text-foreground-muted ml-1">
-                kcal
-              </span>
-            </p>
-            <div className="flex items-center gap-3 text-xs text-foreground-muted mt-0.5">
-              <span>P {Math.round(totals.protein)}g</span>
-              <span>C {Math.round(totals.carbs)}g</span>
-              <span>F {Math.round(totals.fat)}g</span>
-              <span>· {Math.round(totals.grams)}g total</span>
-            </div>
-          </div>
+        <CardContent>
+          <MacroRings totals={totals} goals={goals} />
         </CardContent>
       </Card>
+
+      {/* Water intake */}
+      <WaterTracker date={date} goalMl={goals.waterGoalMl} />
 
       {/* Meals */}
       {loading ? (

@@ -22,8 +22,11 @@ interface Set {
   setNumber: number;
   reps: number;
   weight: number;
+  notes: string | null;
   exerciseId: string;
 }
+
+type SetPatch = { reps?: number; weight?: number; notes?: string | null };
 
 interface WorkoutExercise {
   exercise: Exercise;
@@ -163,6 +166,7 @@ export default function WorkoutDetailPage({
                   setNumber: newSet.setNumber,
                   reps: newSet.reps,
                   weight: newSet.weight,
+                  notes: newSet.notes ?? null,
                   exerciseId: exercise.id,
                 },
               ],
@@ -209,6 +213,7 @@ export default function WorkoutDetailPage({
                       setNumber: newSet.setNumber,
                       reps: newSet.reps,
                       weight: newSet.weight,
+                      notes: newSet.notes ?? null,
                       exerciseId,
                     },
                   ],
@@ -226,7 +231,7 @@ export default function WorkoutDetailPage({
   // Optimistic + chained: later saves for the same set wait for earlier
   // ones to finish, so an in-flight {reps:10, weight:0} can't land after
   // {reps:10, weight:80} and overwrite the typed weight.
-  const handleUpdateSet = (setId: string, reps: number, weight: number) => {
+  const handleUpdateSet = (setId: string, patch: SetPatch) => {
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -234,7 +239,7 @@ export default function WorkoutDetailPage({
         exercises: prev.exercises.map((ex) => ({
           ...ex,
           sets: ex.sets.map((s) =>
-            s.id === setId ? { ...s, reps, weight } : s
+            s.id === setId ? { ...s, ...patch } : s
           ),
         })),
       };
@@ -248,7 +253,7 @@ export default function WorkoutDetailPage({
         const res = await fetch(`/api/sets/${setId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reps, weight }),
+          body: JSON.stringify(patch),
         });
         if (!res.ok) throw new Error("Save failed");
       })

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { WorkoutHeatmap } from "@/components/progress/WorkoutHeatmap";
 import { BodyWeightCard } from "@/components/dashboard/BodyWeightCard";
+import { WeeklyPlanner } from "@/components/dashboard/WeeklyPlanner";
 import { formatDate, formatWeight } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -180,6 +181,9 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Weekly plan */}
+      <WeeklyPlanner />
 
       {/* Body weight quick-log */}
       <BodyWeightCard />

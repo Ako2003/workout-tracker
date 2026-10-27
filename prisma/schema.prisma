@@ -13,11 +13,28 @@ model User {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  exercises   Exercise[]       @relation("UserExercises")
-  sessions    WorkoutSession[]
-  foods       Food[]           @relation("UserFoods")
-  foodEntries FoodEntry[]
-  bodyWeights BodyWeight[]
+  exercises    Exercise[]       @relation("UserExercises")
+  sessions     WorkoutSession[]
+  foods        Food[]           @relation("UserFoods")
+  foodEntries  FoodEntry[]
+  bodyWeights  BodyWeight[]
+  profile      UserProfile?
+  waterEntries WaterEntry[]
+  templates    WorkoutTemplate[] @relation("UserTemplates")
+  plans        WorkoutPlan[]
+}
+
+model UserProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kcalGoal         Int?
+  proteinGoal      Int?
+  carbsGoal        Int?
+  fatGoal          Int?
+  waterGoalMl      Int?
+  bodyweightGoalKg Float?
+  updatedAt        DateTime @updatedAt
 }
 
 enum MuscleGroup {
@@ -39,7 +56,8 @@ model Exercise {
   user        User?       @relation("UserExercises", fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime    @default(now())
 
-  workoutSets WorkoutSet[]
+  workoutSets      WorkoutSet[]
+  templateEntries  WorkoutTemplateExercise[]
 
   @@unique([name, userId])
   @@index([muscleGroup])
@@ -72,6 +90,7 @@ model WorkoutSet {
   setNumber  Int
   reps       Int
   weight     Float
+  notes      String?
   createdAt  DateTime       @default(now())
 
   @@index([sessionId])
@@ -139,6 +158,57 @@ model BodyWeight {
   weightKg  Float
   date      DateTime @db.Date
   createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WaterEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  ml        Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model WorkoutTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?  @unique
+  isCustom  Boolean  @default(false)
+  userId    String?
+  user      User?    @relation("UserTemplates", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  exercises WorkoutTemplateExercise[]
+  plans     WorkoutPlan[]
+
+  @@index([userId])
+}
+
+model WorkoutTemplateExercise {
+  id         String          @id @default(cuid())
+  templateId String
+  template   WorkoutTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  order      Int
+
+  @@unique([templateId, exerciseId])
+  @@index([templateId])
+}
+
+model WorkoutPlan {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime        @db.Date
+  templateId String
+  template   WorkoutTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now())
 
   @@unique([userId, date])
   @@index([userId, date])

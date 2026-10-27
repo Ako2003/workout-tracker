@@ -13,7 +13,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { reps, weight } = await request.json();
+    const { reps, weight, notes } = await request.json();
 
     // Verify the set belongs to user's session
     const set = await prisma.workoutSet.findFirst({
@@ -32,6 +32,9 @@ export async function PUT(
       data: {
         ...(reps !== undefined && { reps }),
         ...(weight !== undefined && { weight }),
+        ...(notes !== undefined && {
+          notes: typeof notes === "string" ? notes.trim() || null : null,
+        }),
       },
       include: {
         exercise: true,

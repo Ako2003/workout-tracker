@@ -9,6 +9,7 @@ import {
   Calendar,
   ChevronRight,
   CalendarPlus,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
+import { TemplatePicker } from "@/components/workout/TemplatePicker";
 import { formatDate, formatWeight } from "@/lib/utils";
 
 interface SessionItem {
@@ -56,6 +58,7 @@ export default function WorkoutPage() {
   const [isPastOpen, setIsPastOpen] = useState(false);
   const [pastDate, setPastDate] = useState(toDateInputValue(new Date()));
   const [creatingPast, setCreatingPast] = useState(false);
+  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
 
   const fetchSessions = useCallback(async (offset = 0) => {
     try {
@@ -174,16 +177,25 @@ export default function WorkoutPage() {
             All your training sessions
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setPastDate(toDateInputValue(new Date()));
-            setIsPastOpen(true);
-          }}
-        >
-          <CalendarPlus className="w-4 h-4 mr-1" />
-          Log past
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => setIsTemplateOpen(true)}
+          >
+            <Sparkles className="w-4 h-4 mr-1" />
+            Template
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setPastDate(toDateInputValue(new Date()));
+              setIsPastOpen(true);
+            }}
+          >
+            <CalendarPlus className="w-4 h-4 mr-1" />
+            Log past
+          </Button>
+        </div>
       </div>
 
       {/* Today */}
@@ -255,6 +267,16 @@ export default function WorkoutPage() {
           </div>
         )}
       </section>
+
+      {/* Template picker */}
+      <TemplatePicker
+        isOpen={isTemplateOpen}
+        onClose={() => setIsTemplateOpen(false)}
+        onStarted={(sessionId) => {
+          setIsTemplateOpen(false);
+          router.push(`/workout/${sessionId}`);
+        }}
+      />
 
       {/* Log past workout modal */}
       <Modal

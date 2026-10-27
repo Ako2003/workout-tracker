@@ -3,6 +3,139 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const PRESET_TEMPLATES: Array<{ slug: string; name: string; exercises: string[] }> = [
+  {
+    slug: "push",
+    name: "Push",
+    exercises: [
+      "Bench Press",
+      "Incline Dumbbell Press",
+      "Overhead Press",
+      "Lateral Raise",
+      "Tricep Pushdown",
+      "Skull Crushers",
+    ],
+  },
+  {
+    slug: "pull",
+    name: "Pull",
+    exercises: [
+      "Deadlift",
+      "Pull-ups",
+      "Barbell Row",
+      "Lat Pulldown",
+      "Face Pulls",
+      "Barbell Curl",
+      "Hammer Curl",
+    ],
+  },
+  {
+    slug: "legs",
+    name: "Legs",
+    exercises: [
+      "Squat",
+      "Romanian Deadlift",
+      "Leg Press",
+      "Leg Curl",
+      "Leg Extension",
+      "Calf Raise",
+    ],
+  },
+  {
+    slug: "upper",
+    name: "Upper",
+    exercises: [
+      "Bench Press",
+      "Barbell Row",
+      "Overhead Press",
+      "Pull-ups",
+      "Lateral Raise",
+      "Barbell Curl",
+      "Tricep Pushdown",
+    ],
+  },
+  {
+    slug: "lower",
+    name: "Lower",
+    exercises: [
+      "Squat",
+      "Romanian Deadlift",
+      "Lunges",
+      "Leg Curl",
+      "Leg Extension",
+      "Calf Raise",
+    ],
+  },
+  {
+    slug: "full-body",
+    name: "Full Body",
+    exercises: [
+      "Squat",
+      "Bench Press",
+      "Barbell Row",
+      "Overhead Press",
+      "Deadlift",
+    ],
+  },
+  {
+    slug: "bro-chest",
+    name: "Chest Day",
+    exercises: [
+      "Bench Press",
+      "Incline Bench Press",
+      "Dumbbell Flyes",
+      "Cable Crossover",
+      "Push-ups",
+    ],
+  },
+  {
+    slug: "bro-back",
+    name: "Back Day",
+    exercises: [
+      "Pull-ups",
+      "Lat Pulldown",
+      "Barbell Row",
+      "Seated Cable Row",
+      "Deadlift",
+    ],
+  },
+  {
+    slug: "bro-shoulders",
+    name: "Shoulder Day",
+    exercises: [
+      "Overhead Press",
+      "Lateral Raise",
+      "Front Raise",
+      "Rear Delt Fly",
+      "Shrugs",
+    ],
+  },
+  {
+    slug: "bro-arms",
+    name: "Arm Day",
+    exercises: [
+      "Barbell Curl",
+      "Dumbbell Curl",
+      "Hammer Curl",
+      "Tricep Pushdown",
+      "Skull Crushers",
+      "Dips",
+    ],
+  },
+  {
+    slug: "bro-legs",
+    name: "Leg Day",
+    exercises: [
+      "Squat",
+      "Leg Press",
+      "Romanian Deadlift",
+      "Leg Curl",
+      "Leg Extension",
+      "Calf Raise",
+    ],
+  },
+];
+
 const PRESET_FOODS: Array<{
   nameEn: string;
   nameRu: string;
@@ -234,6 +367,64 @@ async function main() {
   }
   console.log(
     `Preset foods: ${foodsCreated} created, ${foodsUpdated} updated`
+  );
+
+  // Preset workout templates — reconcile by slug. Replaces the exercise list
+  // when a template already exists to keep it in sync with this file.
+  const allExercises = await prisma.exercise.findMany({
+    where: { isCustom: false, userId: null },
+    select: { id: true, name: true },
+  });
+  const exerciseIdByName = new Map(allExercises.map((e) => [e.name, e.id]));
+
+  let templatesCreated = 0;
+  let templatesUpdated = 0;
+  let templatesSkipped = 0;
+  for (const tpl of PRESET_TEMPLATES) {
+    const resolved = tpl.exercises
+      .map((name, i) => ({ exerciseId: exerciseIdByName.get(name), order: i }))
+      .filter(
+        (e): e is { exerciseId: string; order: number } =>
+          typeof e.exerciseId === "string"
+      );
+    if (resolved.length === 0) {
+      console.warn(`Template "${tpl.name}": no exercises resolved, skipping`);
+      templatesSkipped++;
+      continue;
+    }
+
+    const existing = await prisma.workoutTemplate.findUnique({
+      where: { slug: tpl.slug },
+      include: { exercises: true },
+    });
+
+    if (!existing) {
+      await prisma.workoutTemplate.create({
+        data: {
+          slug: tpl.slug,
+          name: tpl.name,
+          isCustom: false,
+          userId: null,
+          exercises: { create: resolved },
+        },
+      });
+      templatesCreated++;
+    } else {
+      await prisma.workoutTemplateExercise.deleteMany({
+        where: { templateId: existing.id },
+      });
+      await prisma.workoutTemplate.update({
+        where: { id: existing.id },
+        data: {
+          name: tpl.name,
+          exercises: { create: resolved },
+        },
+      });
+      templatesUpdated++;
+    }
+  }
+  console.log(
+    `Preset templates: ${templatesCreated} created, ${templatesUpdated} updated, ${templatesSkipped} skipped`
   );
 
   console.log("Seeding complete!");
