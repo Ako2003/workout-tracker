@@ -209,6 +209,18 @@ const PRESET_FOODS: Array<{
   { nameEn: "French fries", nameRu: "Картофель фри", caloriesPer100g: 312, proteinPer100g: 3.4, carbsPer100g: 41, fatPer100g: 15 },
   { nameEn: "Potato chips", nameRu: "Чипсы", caloriesPer100g: 536, proteinPer100g: 7, carbsPer100g: 53, fatPer100g: 34 },
   { nameEn: "Doner kebab", nameRu: "Донер-кебаб", caloriesPer100g: 215, proteinPer100g: 13, carbsPer100g: 18, fatPer100g: 10, servingSizeG: 300, servingLabel: "wrap" },
+  // Drinks — 100g row ≈ 100ml for these liquids; piece size is a standard
+  // can / bottle / glass so you can log by tapping "1".
+  { nameEn: "Cola", nameRu: "Кола", caloriesPer100g: 42, proteinPer100g: 0, carbsPer100g: 10.6, fatPer100g: 0, servingSizeG: 330, servingLabel: "can" },
+  { nameEn: "Cola Zero", nameRu: "Кола Зеро", caloriesPer100g: 0.3, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0, servingSizeG: 330, servingLabel: "can" },
+  { nameEn: "Orange juice", nameRu: "Апельсиновый сок", caloriesPer100g: 44, proteinPer100g: 0.7, carbsPer100g: 10, fatPer100g: 0.2, servingSizeG: 250, servingLabel: "glass" },
+  { nameEn: "Apple juice", nameRu: "Яблочный сок", caloriesPer100g: 46, proteinPer100g: 0.1, carbsPer100g: 11, fatPer100g: 0.1, servingSizeG: 250, servingLabel: "glass" },
+  { nameEn: "Fanta (orange soda)", nameRu: "Фанта", caloriesPer100g: 47, proteinPer100g: 0, carbsPer100g: 11.8, fatPer100g: 0, servingSizeG: 330, servingLabel: "can" },
+  { nameEn: "Sprite", nameRu: "Спрайт", caloriesPer100g: 37, proteinPer100g: 0, carbsPer100g: 9, fatPer100g: 0, servingSizeG: 330, servingLabel: "can" },
+  { nameEn: "Beer (lager)", nameRu: "Пиво (светлое)", caloriesPer100g: 43, proteinPer100g: 0.5, carbsPer100g: 3.6, fatPer100g: 0, servingSizeG: 500, servingLabel: "bottle" },
+  { nameEn: "Coffee (black)", nameRu: "Кофе (чёрный)", caloriesPer100g: 2, proteinPer100g: 0.1, carbsPer100g: 0, fatPer100g: 0, servingSizeG: 250, servingLabel: "cup" },
+  { nameEn: "Energy drink (Red Bull)", nameRu: "Энергетик (Red Bull)", caloriesPer100g: 45, proteinPer100g: 0.4, carbsPer100g: 11, fatPer100g: 0, servingSizeG: 250, servingLabel: "can" },
+  { nameEn: "Red wine", nameRu: "Красное вино", caloriesPer100g: 85, proteinPer100g: 0.1, carbsPer100g: 2.6, fatPer100g: 0, servingSizeG: 150, servingLabel: "glass" },
   { nameEn: "Butter", nameRu: "Сливочное масло", caloriesPer100g: 717, proteinPer100g: 0.9, carbsPer100g: 0.1, fatPer100g: 81 },
   { nameEn: "Mayonnaise", nameRu: "Майонез", caloriesPer100g: 680, proteinPer100g: 1, carbsPer100g: 2.6, fatPer100g: 75 },
   { nameEn: "Sour cream (20%)", nameRu: "Сметана 20%", caloriesPer100g: 206, proteinPer100g: 2.8, carbsPer100g: 3.2, fatPer100g: 20 },
