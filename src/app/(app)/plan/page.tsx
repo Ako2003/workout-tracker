@@ -5,7 +5,10 @@ import Link from "next/link";
 import {
   Activity,
   ArrowRight,
+  Bell,
+  BellOff,
   CheckCircle2,
+  Clock,
   Flame,
   Save,
   Scale,
@@ -17,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import {
   ACTIVITY_LABEL,
+  DEFAULT_MEAL_TIMES,
   DIRECTION_LABEL,
   bmi as bmiCalc,
   bmiLabel,
@@ -31,6 +35,7 @@ import {
   type Direction,
   type Sex,
 } from "@/lib/nutrition";
+import { useMealReminders } from "@/lib/useMealReminders";
 import {
   BASE_DAILY_KCAL,
   MEAL_LABEL,
@@ -219,6 +224,22 @@ export default function PlanPage() {
       bmiInfo: bmiLabel(b),
     };
   }, [canCompute, currentWeight, targetWeight, height, age, sex, activity]);
+
+  const mealTimes = recommendation
+    ? DEFAULT_MEAL_TIMES[recommendation.direction]
+    : null;
+
+  const reminderSlots = useMemo(() => {
+    if (!mealTimes) return [];
+    return (MEAL_ORDER as MealKey[]).map((m) => ({
+      key: m,
+      hhmm: mealTimes[m],
+      title: `Time for ${MEAL_LABEL[m].toLowerCase()}`,
+      body: "Open the Plan page to see what to eat.",
+    }));
+  }, [mealTimes]);
+
+  const reminders = useMealReminders(reminderSlots);
 
   const scaledPlan = useMemo<ScaledDay[] | null>(() => {
     if (!recommendation) return null;
@@ -578,6 +599,69 @@ export default function PlanPage() {
             </CardContent>
           </Card>
 
+          {/* Meal-time reminders */}
+          {mealTimes && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-accent" />
+                  Meal times & reminders
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-4 gap-2">
+                  {(MEAL_ORDER as MealKey[]).map((m) => (
+                    <div
+                      key={m}
+                      className="rounded-lg bg-background-tertiary/40 border border-border py-2 text-center"
+                    >
+                      <p className="text-[10px] uppercase tracking-wider text-foreground-muted">
+                        {MEAL_LABEL[m]}
+                      </p>
+                      <p className="font-mono font-semibold text-sm">
+                        {mealTimes[m]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-foreground-muted">
+                  Times are set from your goal direction (
+                  {DIRECTION_LABEL[recommendation.direction].toLowerCase()}).
+                </p>
+                {reminders.permission === "unsupported" ? (
+                  <p className="text-xs text-foreground-subtle">
+                    Your browser does not support notifications.
+                  </p>
+                ) : reminders.permission === "denied" ? (
+                  <p className="text-xs text-foreground-subtle">
+                    Notifications are blocked. Enable them for this site in
+                    your browser settings to receive meal reminders.
+                  </p>
+                ) : reminders.enabled ? (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    onClick={reminders.disable}
+                  >
+                    <BellOff className="w-4 h-4 mr-1" />
+                    Disable reminders
+                  </Button>
+                ) : (
+                  <Button fullWidth onClick={reminders.enable}>
+                    <Bell className="w-4 h-4 mr-1" />
+                    Enable meal reminders
+                  </Button>
+                )}
+                {reminders.enabled && (
+                  <p className="text-[11px] text-foreground-subtle">
+                    Reminders fire while this app tab is open. Closing the tab
+                    stops them.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Weekly plan */}
           {scaledPlan && (
             <>
@@ -599,6 +683,7 @@ export default function PlanPage() {
                     day={day}
                     index={idx}
                     targetKcal={recommendation.kcal}
+                    mealTimes={mealTimes}
                     loggingKey={loggingKey}
                     onLogMeal={logMeal}
                   />
@@ -734,12 +819,14 @@ function DayCard({
   day,
   index,
   targetKcal,
+  mealTimes,
   loggingKey,
   onLogMeal,
 }: {
   day: ScaledDay;
   index: number;
   targetKcal: number;
+  mealTimes: Record<MealKey, string> | null;
   loggingKey: string | null;
   onLogMeal: (dayIdx: number, meal: ScaledMeal) => void;
 }) {
@@ -786,6 +873,7 @@ function DayCard({
           <MealBlock
             key={m.meal}
             meal={m}
+            time={mealTimes ? mealTimes[m.meal] : null}
             isLogging={loggingKey === `${index}-${m.meal}`}
             onLog={() => onLogMeal(index, m)}
           />
@@ -797,10 +885,12 @@ function DayCard({
 
 function MealBlock({
   meal,
+  time,
   isLogging,
   onLog,
 }: {
   meal: ScaledMeal;
+  time: string | null;
   isLogging: boolean;
   onLog: () => void;
 }) {
@@ -809,9 +899,17 @@ function MealBlock({
     <div className="p-4 space-y-2">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
-            {MEAL_LABEL[meal.meal]}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
+              {MEAL_LABEL[meal.meal]}
+            </p>
+            {time && (
+              <span className="inline-flex items-center gap-1 text-xs font-mono text-accent">
+                <Clock className="w-3 h-3" />
+                {time}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-foreground-subtle">
             {Math.round(meal.kcal)} kcal · P {Math.round(meal.proteinG)}g
           </p>

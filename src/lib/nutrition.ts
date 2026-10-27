@@ -125,3 +125,32 @@ export const DIRECTION_LABEL: Record<Direction, string> = {
   MAINTAIN: "Maintain",
   BULK: "Gain muscle",
 };
+
+// Default meal times (HH:MM, 24h) keyed to the goal direction.
+// CUT: eat earlier, finish by ~19:30 to curb evening hunger / improve sleep.
+// MAINTAIN: standard four-meal day.
+// BULK: shift slightly later and keep dinner at 20:00 so you can fit the
+//   larger surplus; snack is positioned mid-afternoon to split the load.
+export const DEFAULT_MEAL_TIMES: Record<
+  Direction,
+  { BREAKFAST: string; LUNCH: string; SNACK: string; DINNER: string }
+> = {
+  CUT: {
+    BREAKFAST: "08:00",
+    LUNCH: "13:00",
+    SNACK: "16:00",
+    DINNER: "19:30",
+  },
+  MAINTAIN: {
+    BREAKFAST: "08:30",
+    LUNCH: "13:00",
+    SNACK: "16:30",
+    DINNER: "20:00",
+  },
+  BULK: {
+    BREAKFAST: "08:00",
+    LUNCH: "12:30",
+    SNACK: "16:00",
+    DINNER: "20:00",
+  },
+};
