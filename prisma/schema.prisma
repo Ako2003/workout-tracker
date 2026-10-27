@@ -118,15 +118,38 @@ model Food {
   proteinPer100g  Float?
   carbsPer100g    Float?
   fatPer100g      Float?
+  // Serving size for countable foods (eggs, sausages, apples). Grams per
+  // single piece plus a label for the piece.
+  servingSizeG    Float?
+  servingLabel    String?
+  // When true, this Food represents a composed recipe. caloriesPer100g +
+  // macros are derived from its ingredients at save time and frozen.
+  isRecipe         Boolean    @default(false)
+  recipeTotalGrams Float?
   isCustom        Boolean     @default(false)
   userId          String?
   user            User?       @relation("UserFoods", fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime    @default(now())
 
-  entries FoodEntry[]
+  entries        FoodEntry[]
+  ingredients    RecipeIngredient[] @relation("RecipeIngredients")
+  usedIn         RecipeIngredient[] @relation("IngredientOf")
 
   @@unique([nameEn, userId])
   @@index([userId])
+}
+
+model RecipeIngredient {
+  id       String @id @default(cuid())
+  recipeId String
+  recipe   Food   @relation("RecipeIngredients", fields: [recipeId], references: [id], onDelete: Cascade)
+  foodId   String
+  food     Food   @relation("IngredientOf", fields: [foodId], references: [id])
+  grams    Float
+  order    Int
+
+  @@index([recipeId])
+  @@index([foodId])
 }
 
 enum Meal {

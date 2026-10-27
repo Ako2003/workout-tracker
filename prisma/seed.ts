@@ -143,25 +143,34 @@ const PRESET_FOODS: Array<{
   proteinPer100g?: number;
   carbsPer100g?: number;
   fatPer100g?: number;
+  servingSizeG?: number;
+  servingLabel?: string;
 }> = [
   { nameEn: "Chicken breast", nameRu: "Куриная грудка", caloriesPer100g: 165, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 3.6 },
   { nameEn: "Chicken thigh", nameRu: "Куриное бедро", caloriesPer100g: 209, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 11 },
   { nameEn: "Lean beef", nameRu: "Говядина (постная)", caloriesPer100g: 217, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 12 },
   { nameEn: "Salmon", nameRu: "Лосось", caloriesPer100g: 208, proteinPer100g: 20, carbsPer100g: 0, fatPer100g: 13 },
   { nameEn: "Tuna (canned in water)", nameRu: "Тунец (в собственном соку)", caloriesPer100g: 116, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 1 },
-  { nameEn: "Egg", nameRu: "Яйцо", caloriesPer100g: 155, proteinPer100g: 13, carbsPer100g: 1.1, fatPer100g: 11 },
-  { nameEn: "Egg white", nameRu: "Яичный белок", caloriesPer100g: 52, proteinPer100g: 11, carbsPer100g: 0.7, fatPer100g: 0.2 },
+  { nameEn: "Egg", nameRu: "Яйцо", caloriesPer100g: 155, proteinPer100g: 13, carbsPer100g: 1.1, fatPer100g: 11, servingSizeG: 50, servingLabel: "egg" },
+  { nameEn: "Egg white", nameRu: "Яичный белок", caloriesPer100g: 52, proteinPer100g: 11, carbsPer100g: 0.7, fatPer100g: 0.2, servingSizeG: 33, servingLabel: "white" },
+  { nameEn: "Wurst / Sosiska", nameRu: "Сосиска", caloriesPer100g: 275, proteinPer100g: 12, carbsPer100g: 2, fatPer100g: 25, servingSizeG: 50, servingLabel: "sausage" },
+  { nameEn: "Doktorskaya sausage", nameRu: "Колбаса докторская", caloriesPer100g: 257, proteinPer100g: 13, carbsPer100g: 1.5, fatPer100g: 22 },
   { nameEn: "White rice (cooked)", nameRu: "Белый рис (варёный)", caloriesPer100g: 130, proteinPer100g: 2.7, carbsPer100g: 28, fatPer100g: 0.3 },
+  { nameEn: "White rice (dry)", nameRu: "Белый рис (сухой)", caloriesPer100g: 360, proteinPer100g: 7, carbsPer100g: 79, fatPer100g: 0.7 },
   { nameEn: "Brown rice (cooked)", nameRu: "Бурый рис (варёный)", caloriesPer100g: 112, proteinPer100g: 2.6, carbsPer100g: 23, fatPer100g: 0.9 },
   { nameEn: "Buckwheat (cooked)", nameRu: "Гречка (варёная)", caloriesPer100g: 110, proteinPer100g: 4, carbsPer100g: 20, fatPer100g: 1.1 },
+  { nameEn: "Buckwheat (dry)", nameRu: "Гречка (сухая)", caloriesPer100g: 343, proteinPer100g: 13, carbsPer100g: 72, fatPer100g: 3.4 },
   { nameEn: "Oats (dry)", nameRu: "Овсянка (сухая)", caloriesPer100g: 389, proteinPer100g: 17, carbsPer100g: 66, fatPer100g: 7 },
   { nameEn: "Pasta (cooked)", nameRu: "Макароны (варёные)", caloriesPer100g: 157, proteinPer100g: 5.8, carbsPer100g: 31, fatPer100g: 0.9 },
+  { nameEn: "Pasta (dry)", nameRu: "Макароны (сухие)", caloriesPer100g: 371, proteinPer100g: 13, carbsPer100g: 75, fatPer100g: 1.5 },
   { nameEn: "Potato (boiled)", nameRu: "Картофель (варёный)", caloriesPer100g: 87, proteinPer100g: 1.9, carbsPer100g: 20, fatPer100g: 0.1 },
+  { nameEn: "Mashed potato", nameRu: "Пюре картофельное", caloriesPer100g: 108, proteinPer100g: 2, carbsPer100g: 16, fatPer100g: 4 },
   { nameEn: "Sweet potato", nameRu: "Батат", caloriesPer100g: 86, proteinPer100g: 1.6, carbsPer100g: 20, fatPer100g: 0.1 },
-  { nameEn: "Bread (white)", nameRu: "Хлеб (белый)", caloriesPer100g: 265, proteinPer100g: 9, carbsPer100g: 49, fatPer100g: 3.2 },
-  { nameEn: "Banana", nameRu: "Банан", caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 23, fatPer100g: 0.3 },
-  { nameEn: "Apple", nameRu: "Яблоко", caloriesPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2 },
-  { nameEn: "Orange", nameRu: "Апельсин", caloriesPer100g: 47, proteinPer100g: 0.9, carbsPer100g: 12, fatPer100g: 0.1 },
+  { nameEn: "Bread (white)", nameRu: "Хлеб (белый)", caloriesPer100g: 265, proteinPer100g: 9, carbsPer100g: 49, fatPer100g: 3.2, servingSizeG: 25, servingLabel: "slice" },
+  { nameEn: "Bread (rye)", nameRu: "Хлеб (ржаной)", caloriesPer100g: 259, proteinPer100g: 9, carbsPer100g: 48, fatPer100g: 3.3, servingSizeG: 25, servingLabel: "slice" },
+  { nameEn: "Banana", nameRu: "Банан", caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 23, fatPer100g: 0.3, servingSizeG: 120, servingLabel: "banana" },
+  { nameEn: "Apple", nameRu: "Яблоко", caloriesPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2, servingSizeG: 180, servingLabel: "apple" },
+  { nameEn: "Orange", nameRu: "Апельсин", caloriesPer100g: 47, proteinPer100g: 0.9, carbsPer100g: 12, fatPer100g: 0.1, servingSizeG: 140, servingLabel: "orange" },
   { nameEn: "Strawberry", nameRu: "Клубника", caloriesPer100g: 32, proteinPer100g: 0.7, carbsPer100g: 7.7, fatPer100g: 0.3 },
   { nameEn: "Milk (2%)", nameRu: "Молоко 2%", caloriesPer100g: 50, proteinPer100g: 3.3, carbsPer100g: 5, fatPer100g: 2 },
   { nameEn: "Greek yogurt", nameRu: "Греческий йогурт", caloriesPer100g: 59, proteinPer100g: 10, carbsPer100g: 3.6, fatPer100g: 0.4 },
@@ -180,6 +189,14 @@ const PRESET_FOODS: Array<{
   { nameEn: "Whey protein", nameRu: "Протеин (сывороточный)", caloriesPer100g: 400, proteinPer100g: 80, carbsPer100g: 7, fatPer100g: 5 },
   { nameEn: "Dark chocolate (85%)", nameRu: "Тёмный шоколад (85%)", caloriesPer100g: 598, proteinPer100g: 7.8, carbsPer100g: 46, fatPer100g: 43 },
   { nameEn: "Honey", nameRu: "Мёд", caloriesPer100g: 304, proteinPer100g: 0.3, carbsPer100g: 82, fatPer100g: 0 },
+  { nameEn: "Butter", nameRu: "Сливочное масло", caloriesPer100g: 717, proteinPer100g: 0.9, carbsPer100g: 0.1, fatPer100g: 81 },
+  { nameEn: "Mayonnaise", nameRu: "Майонез", caloriesPer100g: 680, proteinPer100g: 1, carbsPer100g: 2.6, fatPer100g: 75 },
+  { nameEn: "Sour cream (20%)", nameRu: "Сметана 20%", caloriesPer100g: 206, proteinPer100g: 2.8, carbsPer100g: 3.2, fatPer100g: 20 },
+  { nameEn: "Kefir (1%)", nameRu: "Кефир 1%", caloriesPer100g: 40, proteinPer100g: 3, carbsPer100g: 4, fatPer100g: 1 },
+  { nameEn: "Pelmeni", nameRu: "Пельмени", caloriesPer100g: 253, proteinPer100g: 11, carbsPer100g: 29, fatPer100g: 10 },
+  { nameEn: "Borsch", nameRu: "Борщ", caloriesPer100g: 36, proteinPer100g: 1.5, carbsPer100g: 4.3, fatPer100g: 1.5 },
+  { nameEn: "Onion (raw)", nameRu: "Лук (сырой)", caloriesPer100g: 40, proteinPer100g: 1.1, carbsPer100g: 9.3, fatPer100g: 0.1 },
+  { nameEn: "Bell pepper", nameRu: "Болгарский перец", caloriesPer100g: 27, proteinPer100g: 1, carbsPer100g: 6.3, fatPer100g: 0.3 },
 ];
 
 const PRESET_EXERCISES: Record<MuscleGroup, string[]> = {
@@ -338,6 +355,8 @@ async function main() {
       proteinPer100g: f.proteinPer100g ?? null,
       carbsPer100g: f.carbsPer100g ?? null,
       fatPer100g: f.fatPer100g ?? null,
+      servingSizeG: f.servingSizeG ?? null,
+      servingLabel: f.servingLabel ?? null,
     };
     if (!existing) {
       await prisma.food.create({
@@ -355,7 +374,9 @@ async function main() {
         existing.caloriesPer100g !== payload.caloriesPer100g ||
         existing.proteinPer100g !== payload.proteinPer100g ||
         existing.carbsPer100g !== payload.carbsPer100g ||
-        existing.fatPer100g !== payload.fatPer100g;
+        existing.fatPer100g !== payload.fatPer100g ||
+        existing.servingSizeG !== payload.servingSizeG ||
+        existing.servingLabel !== payload.servingLabel;
       if (changed) {
         await prisma.food.update({
           where: { id: existing.id },

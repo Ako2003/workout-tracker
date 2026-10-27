@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Droplets, Minus, Plus } from "lucide-react";
+import { Coffee, Droplets, Minus, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 
@@ -104,6 +104,15 @@ export function WaterTracker({ date, goalMl }: Props) {
               {ml < 1000 ? `${ml} ml` : `${ml / 1000} L`}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => addWater(250)}
+            className="flex-1 h-9 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-sm font-semibold transition-colors inline-flex items-center justify-center gap-1"
+            title="Tea / coffee count fully as water"
+          >
+            <Coffee className="w-3.5 h-3.5" />
+            Tea
+          </button>
         </div>
       </CardContent>
     </Card>
