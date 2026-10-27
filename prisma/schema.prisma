@@ -25,16 +25,33 @@ model User {
 }
 
 model UserProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String         @id @default(cuid())
+  userId           String         @unique
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   kcalGoal         Int?
   proteinGoal      Int?
   carbsGoal        Int?
   fatGoal          Int?
   waterGoalMl      Int?
   bodyweightGoalKg Float?
-  updatedAt        DateTime @updatedAt
+  heightCm         Int?
+  age              Int?
+  sex              Sex?
+  activityLevel    ActivityLevel?
+  updatedAt        DateTime       @updatedAt
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  VERY_ACTIVE
+  EXTRA_ACTIVE
 }
 
 enum MuscleGroup {

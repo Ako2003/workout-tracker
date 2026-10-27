@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Save, Target } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Download, Save, Sparkles, Target } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -89,6 +90,24 @@ export default function SettingsPage() {
         <h1 className="text-xl font-bold font-display">Settings</h1>
         <p className="text-sm text-foreground-muted">Goals and data export</p>
       </div>
+
+      <Link
+        href="/plan"
+        className="block rounded-xl bg-accent/10 border border-accent/30 p-4 hover:bg-accent/15 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-5 h-5 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-accent">Nutrition plan</p>
+            <p className="text-xs text-foreground-muted">
+              Enter body details, get a daily kcal target + 7-day meal plan
+            </p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-accent" />
+        </div>
+      </Link>
 
       <Card>
         <CardHeader>

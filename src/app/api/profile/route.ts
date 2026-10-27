@@ -22,6 +22,10 @@ export async function GET() {
         fatGoal: null,
         waterGoalMl: null,
         bodyweightGoalKg: null,
+        heightCm: null,
+        age: null,
+        sex: null,
+        activityLevel: null,
       }
     );
   } catch (error) {
@@ -53,6 +57,14 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
+    const SEX_VALUES = ["MALE", "FEMALE"] as const;
+    const ACTIVITY_VALUES = [
+      "SEDENTARY",
+      "LIGHT",
+      "MODERATE",
+      "VERY_ACTIVE",
+      "EXTRA_ACTIVE",
+    ] as const;
     const data = {
       kcalGoal: toIntOrNull(body.kcalGoal),
       proteinGoal: toIntOrNull(body.proteinGoal),
@@ -60,6 +72,12 @@ export async function PUT(request: Request) {
       fatGoal: toIntOrNull(body.fatGoal),
       waterGoalMl: toIntOrNull(body.waterGoalMl),
       bodyweightGoalKg: toFloatOrNull(body.bodyweightGoalKg),
+      heightCm: toIntOrNull(body.heightCm),
+      age: toIntOrNull(body.age),
+      sex: SEX_VALUES.includes(body.sex) ? body.sex : null,
+      activityLevel: ACTIVITY_VALUES.includes(body.activityLevel)
+        ? body.activityLevel
+        : null,
     };
 
     const profile = await prisma.userProfile.upsert({

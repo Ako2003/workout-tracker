@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import {
   Apple,
   ChefHat,
@@ -14,6 +15,7 @@ import {
   ChevronRight,
   Plus,
   Search,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -232,11 +234,20 @@ export default function FoodPage() {
   return (
     <div className="p-4 max-w-lg mx-auto space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold font-display">Food</h1>
-        <p className="text-sm text-foreground-muted">
-          Track meals and calories
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold font-display">Food</h1>
+          <p className="text-sm text-foreground-muted">
+            Track meals and calories
+          </p>
+        </div>
+        <Link
+          href="/plan"
+          className="inline-flex items-center gap-1 px-3 h-9 rounded-lg bg-accent/10 text-accent text-sm font-semibold hover:bg-accent/20 transition-colors"
+        >
+          <Sparkles className="w-4 h-4" />
+          Plan
+        </Link>
       </div>
 
       {/* Date switcher */}
