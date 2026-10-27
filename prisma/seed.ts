@@ -168,6 +168,7 @@ const PRESET_FOODS: Array<{
   { nameEn: "Sweet potato", nameRu: "Батат", caloriesPer100g: 86, proteinPer100g: 1.6, carbsPer100g: 20, fatPer100g: 0.1 },
   { nameEn: "Bread (white)", nameRu: "Хлеб (белый)", caloriesPer100g: 265, proteinPer100g: 9, carbsPer100g: 49, fatPer100g: 3.2, servingSizeG: 25, servingLabel: "slice" },
   { nameEn: "Bread (rye)", nameRu: "Хлеб (ржаной)", caloriesPer100g: 259, proteinPer100g: 9, carbsPer100g: 48, fatPer100g: 3.3, servingSizeG: 25, servingLabel: "slice" },
+  { nameEn: "Brötchen (white wheat roll)", nameRu: "Брётхен (булочка)", caloriesPer100g: 265, proteinPer100g: 9, carbsPer100g: 50, fatPer100g: 2, servingSizeG: 55, servingLabel: "brötchen" },
   { nameEn: "Banana", nameRu: "Банан", caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 23, fatPer100g: 0.3, servingSizeG: 120, servingLabel: "banana" },
   { nameEn: "Apple", nameRu: "Яблоко", caloriesPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2, servingSizeG: 180, servingLabel: "apple" },
   { nameEn: "Orange", nameRu: "Апельсин", caloriesPer100g: 47, proteinPer100g: 0.9, carbsPer100g: 12, fatPer100g: 0.1, servingSizeG: 140, servingLabel: "orange" },
