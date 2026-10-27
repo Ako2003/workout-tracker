@@ -33,21 +33,34 @@ export function SetRow({
   const [isEditing, setIsEditing] = useState(isNew);
   const repsFocused = useRef(false);
   const weightFocused = useRef(false);
+  // Tracks the last values we committed upward. Comparing against this
+  // instead of the prop prevents us from re-sending stale values when
+  // a save is still in flight and the prop hasn't caught up.
+  const lastSentReps = useRef(reps);
+  const lastSentWeight = useRef(weight);
 
   // Only sync from props when the user is not actively editing that field,
   // so a re-render mid-typing never wipes out unsaved input.
   useEffect(() => {
-    if (!repsFocused.current) setLocalReps(displayValue(reps));
+    if (!repsFocused.current) {
+      setLocalReps(displayValue(reps));
+      lastSentReps.current = reps;
+    }
   }, [reps]);
 
   useEffect(() => {
-    if (!weightFocused.current) setLocalWeight(displayValue(weight));
+    if (!weightFocused.current) {
+      setLocalWeight(displayValue(weight));
+      lastSentWeight.current = weight;
+    }
   }, [weight]);
 
   const handleSave = () => {
     const newReps = parseInt(localReps) || 0;
     const newWeight = parseFloat(localWeight) || 0;
-    if (newReps !== reps || newWeight !== weight) {
+    if (newReps !== lastSentReps.current || newWeight !== lastSentWeight.current) {
+      lastSentReps.current = newReps;
+      lastSentWeight.current = newWeight;
       onUpdate(newReps, newWeight);
     }
     setIsEditing(false);
@@ -63,6 +76,8 @@ export function SetRow({
     if (suggestedReps !== undefined && suggestedWeight !== undefined) {
       setLocalReps(suggestedReps.toString());
       setLocalWeight(suggestedWeight.toString());
+      lastSentReps.current = suggestedReps;
+      lastSentWeight.current = suggestedWeight;
       onUpdate(suggestedReps, suggestedWeight);
     }
   };

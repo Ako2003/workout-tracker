@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Dumbbell,
   ListChecks,
-  History,
+  Apple,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/exercises", icon: ListChecks, label: "Exercises" },
   { href: "/workout", icon: Dumbbell, label: "Workout" },
-  { href: "/history", icon: History, label: "History" },
+  { href: "/food", icon: Apple, label: "Food" },
   { href: "/progress", icon: TrendingUp, label: "Progress" },
 ];
 

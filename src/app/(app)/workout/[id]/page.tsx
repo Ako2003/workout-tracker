@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, use, useMemo } from "react";
+import { useState, useEffect, useCallback, use, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Dumbbell, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ExercisePicker } from "@/components/workout/ExercisePicker";
 import { ExerciseItem } from "@/components/workout/ExerciseItem";
+import { RunSection, type RunData } from "@/components/workout/RunSection";
+import { RestTimer } from "@/components/workout/RestTimer";
 import { useToast } from "@/components/ui/Toast";
 import { formatDateFull } from "@/lib/utils";
 
@@ -28,11 +30,26 @@ interface WorkoutExercise {
   sets: Set[];
 }
 
+interface ExerciseHistory {
+  lastPerformance: {
+    date: string;
+    sets: { setNumber: number; reps: number; weight: number }[];
+    maxWeight: number;
+    totalVolume: number;
+  } | null;
+  personalRecord: {
+    weight: number;
+    reps: number;
+    date: string;
+  } | null;
+}
+
 interface Session {
   id: string;
   date: string;
   notes: string | null;
   exercises: WorkoutExercise[];
+  run: RunData | null;
 }
 
 const MUSCLE_ORDER = [
@@ -74,8 +91,13 @@ export default function WorkoutDetailPage({
   const router = useRouter();
   const { showToast } = useToast();
   const [session, setSession] = useState<Session | null>(null);
+  const [history, setHistory] = useState<Record<string, ExerciseHistory>>({});
   const [loading, setLoading] = useState(true);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  // Serialize PUTs per set so a later edit never gets overtaken by an
+  // older one still in flight. Each entry is the tail of that set's chain.
+  const setUpdateChains = useRef<Map<string, Promise<unknown>>>(new Map());
 
   const fetchSession = useCallback(async () => {
     try {
@@ -94,9 +116,21 @@ export default function WorkoutDetailPage({
     }
   }, [id, router]);
 
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/sessions/${id}/history`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setHistory(data.byExerciseId ?? {});
+    } catch (error) {
+      console.error("Failed to fetch history:", error);
+    }
+  }, [id]);
+
   useEffect(() => {
     fetchSession();
-  }, [fetchSession]);
+    fetchHistory();
+  }, [fetchSession, fetchHistory]);
 
   const handleAddExercise = async (exercise: Exercise) => {
     if (!session) return;
@@ -113,10 +147,30 @@ export default function WorkoutDetailPage({
         }),
       });
 
-      if (res.ok) {
-        fetchSession();
-        showToast(`Added ${exercise.name}`, "success");
-      }
+      if (!res.ok) throw new Error("Failed");
+      const newSet = await res.json();
+      setSession((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          exercises: [
+            ...prev.exercises,
+            {
+              exercise,
+              sets: [
+                {
+                  id: newSet.id,
+                  setNumber: newSet.setNumber,
+                  reps: newSet.reps,
+                  weight: newSet.weight,
+                  exerciseId: exercise.id,
+                },
+              ],
+            },
+          ],
+        };
+      });
+      showToast(`Added ${exercise.name}`, "success");
     } catch (error) {
       console.error("Failed to add exercise:", error);
       showToast("Failed to add exercise", "error");
@@ -138,21 +192,41 @@ export default function WorkoutDetailPage({
         }),
       });
 
-      if (res.ok) {
-        fetchSession();
-      }
+      if (!res.ok) throw new Error("Failed");
+      const newSet = await res.json();
+      setSession((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          exercises: prev.exercises.map((ex) =>
+            ex.exercise.id === exerciseId
+              ? {
+                  ...ex,
+                  sets: [
+                    ...ex.sets,
+                    {
+                      id: newSet.id,
+                      setNumber: newSet.setNumber,
+                      reps: newSet.reps,
+                      weight: newSet.weight,
+                      exerciseId,
+                    },
+                  ],
+                }
+              : ex
+          ),
+        };
+      });
     } catch (error) {
       console.error("Failed to add set:", error);
+      showToast("Failed to add set", "error");
     }
   };
 
-  // Optimistic update: change local state immediately so a re-render
-  // mid-typing can't override the user's input.
-  const handleUpdateSet = async (
-    setId: string,
-    reps: number,
-    weight: number
-  ) => {
+  // Optimistic + chained: later saves for the same set wait for earlier
+  // ones to finish, so an in-flight {reps:10, weight:0} can't land after
+  // {reps:10, weight:80} and overwrite the typed weight.
+  const handleUpdateSet = (setId: string, reps: number, weight: number) => {
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -166,26 +240,51 @@ export default function WorkoutDetailPage({
       };
     });
 
-    try {
-      const res = await fetch(`/api/sets/${setId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reps, weight }),
+    const prevChain =
+      setUpdateChains.current.get(setId) ?? Promise.resolve();
+    const nextChain = prevChain
+      .catch(() => {})
+      .then(async () => {
+        const res = await fetch(`/api/sets/${setId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reps, weight }),
+        });
+        if (!res.ok) throw new Error("Save failed");
+      })
+      .catch((error) => {
+        console.error("Failed to update set:", error);
+        showToast("Failed to save", "error");
       });
-      if (!res.ok) throw new Error("Save failed");
-    } catch (error) {
-      console.error("Failed to update set:", error);
-      showToast("Failed to save", "error");
-      fetchSession();
-    }
+    setUpdateChains.current.set(setId, nextChain);
   };
 
   const handleDeleteSet = async (setId: string) => {
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        exercises: prev.exercises
+          .map((ex) => {
+            const filtered = ex.sets.filter((s) => s.id !== setId);
+            // Renumber remaining sets to match the server-side renumber.
+            const renumbered = filtered.map((s, i) => ({
+              ...s,
+              setNumber: i + 1,
+            }));
+            return { ...ex, sets: renumbered };
+          })
+          .filter((ex) => ex.sets.length > 0),
+      };
+    });
+    setUpdateChains.current.delete(setId);
     try {
-      await fetch(`/api/sets/${setId}`, { method: "DELETE" });
-      fetchSession();
+      const res = await fetch(`/api/sets/${setId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
     } catch (error) {
       console.error("Failed to delete set:", error);
+      showToast("Failed to delete set", "error");
+      fetchSession();
     }
   };
 
@@ -197,17 +296,32 @@ export default function WorkoutDetailPage({
     );
     if (!exerciseData) return;
 
+    const setIds = exerciseData.sets.map((s) => s.id);
+    setSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        exercises: prev.exercises.filter((e) => e.exercise.id !== exerciseId),
+      };
+    });
+    setIds.forEach((sid) => setUpdateChains.current.delete(sid));
+
     try {
       await Promise.all(
-        exerciseData.sets.map((set) =>
-          fetch(`/api/sets/${set.id}`, { method: "DELETE" })
+        setIds.map((sid) =>
+          fetch(`/api/sets/${sid}`, { method: "DELETE" })
         )
       );
-      fetchSession();
       showToast(`Removed ${exerciseData.exercise.name}`, "info");
     } catch (error) {
       console.error("Failed to remove exercise:", error);
+      showToast("Failed to remove exercise", "error");
+      fetchSession();
     }
+  };
+
+  const handleRunChange = (run: RunData | null) => {
+    setSession((prev) => (prev ? { ...prev, run } : prev));
   };
 
   const handleDeleteWorkout = async () => {
@@ -326,6 +440,8 @@ export default function WorkoutDetailPage({
                       exercise={exercise}
                       sets={sets}
                       sessionId={session.id}
+                      lastPerformance={history[exercise.id]?.lastPerformance ?? null}
+                      personalRecord={history[exercise.id]?.personalRecord ?? null}
                       onAddSet={handleAddSet}
                       onUpdateSet={handleUpdateSet}
                       onDeleteSet={handleDeleteSet}
@@ -338,6 +454,13 @@ export default function WorkoutDetailPage({
           })}
         </div>
       )}
+
+      {/* Running (cardio at the end of the session) */}
+      <RunSection
+        sessionId={session.id}
+        run={session.run}
+        onChange={handleRunChange}
+      />
 
       {/* Delete workout */}
       <div className="pt-4 flex justify-center">
@@ -358,6 +481,9 @@ export default function WorkoutDetailPage({
         onSelect={handleAddExercise}
         excludeIds={existingExerciseIds}
       />
+
+      {/* Floating rest timer */}
+      <RestTimer />
     </div>
   );
 }

@@ -13,8 +13,11 @@ model User {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  exercises Exercise[]       @relation("UserExercises")
-  sessions  WorkoutSession[]
+  exercises   Exercise[]       @relation("UserExercises")
+  sessions    WorkoutSession[]
+  foods       Food[]           @relation("UserFoods")
+  foodEntries FoodEntry[]
+  bodyWeights BodyWeight[]
 }
 
 enum MuscleGroup {
@@ -53,6 +56,7 @@ model WorkoutSession {
   updatedAt DateTime     @updatedAt
 
   sets WorkoutSet[]
+  run  RunEntry?
 
   @@unique([userId, date])
   @@index([userId])
@@ -73,4 +77,69 @@ model WorkoutSet {
   @@index([sessionId])
   @@index([exerciseId])
   @@index([sessionId, exerciseId])
+}
+
+model RunEntry {
+  id              String         @id @default(cuid())
+  sessionId       String         @unique
+  session         WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  distanceMeters  Int
+  durationSeconds Int
+  caloriesBurned  Int?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Food {
+  id              String      @id @default(cuid())
+  nameEn          String
+  nameRu          String?
+  caloriesPer100g Float
+  proteinPer100g  Float?
+  carbsPer100g    Float?
+  fatPer100g      Float?
+  isCustom        Boolean     @default(false)
+  userId          String?
+  user            User?       @relation("UserFoods", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+
+  entries FoodEntry[]
+
+  @@unique([nameEn, userId])
+  @@index([userId])
+}
+
+enum Meal {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+model FoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  grams     Float
+  date      DateTime @db.Date
+  meal      Meal?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@index([foodId])
+}
+
+model BodyWeight {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weightKg  Float
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }

@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { WorkoutHeatmap } from "@/components/progress/WorkoutHeatmap";
+import { BodyWeightCard } from "@/components/dashboard/BodyWeightCard";
 import { formatDate, formatWeight } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -179,6 +180,9 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Body weight quick-log */}
+      <BodyWeightCard />
 
       {/* Activity Heatmap */}
       {stats?.heatmapData && stats.heatmapData.length > 0 && (

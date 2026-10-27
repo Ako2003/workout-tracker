@@ -35,6 +35,8 @@ interface ExerciseItemProps {
   };
   sets: Set[];
   sessionId: string;
+  lastPerformance: LastPerformance | null;
+  personalRecord: PersonalRecord | null;
   onAddSet: (exerciseId: string) => void;
   onUpdateSet: (setId: string, reps: number, weight: number) => void;
   onDeleteSet: (setId: string) => void;
@@ -45,6 +47,8 @@ interface ExerciseItemProps {
 export function ExerciseItem({
   exercise,
   sets,
+  lastPerformance,
+  personalRecord,
   onAddSet,
   onUpdateSet,
   onDeleteSet,
@@ -52,8 +56,6 @@ export function ExerciseItem({
   onNewPR,
 }: ExerciseItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [lastPerformance, setLastPerformance] = useState<LastPerformance | null>(null);
-  const [personalRecord, setPersonalRecord] = useState<PersonalRecord | null>(null);
   const [prCelebrated, setPrCelebrated] = useState(false);
 
   const totalVolume = sets.reduce((sum, set) => sum + set.reps * set.weight, 0);
@@ -62,10 +64,6 @@ export function ExerciseItem({
   // Check if current session has a new PR
   const isNewPR = personalRecord && maxWeight > personalRecord.weight && maxWeight > 0;
 
-  useEffect(() => {
-    fetchHistory();
-  }, [exercise.id]);
-
   // Trigger PR celebration when new PR is detected
   useEffect(() => {
     if (isNewPR && !prCelebrated && onNewPR) {
@@ -73,21 +71,6 @@ export function ExerciseItem({
       setPrCelebrated(true);
     }
   }, [isNewPR, prCelebrated, maxWeight, exercise.name, onNewPR]);
-
-  async function fetchHistory() {
-    try {
-      const res = await fetch(`/api/exercises/${exercise.id}/history`);
-      const data = await res.json();
-      if (data.lastPerformance) {
-        setLastPerformance(data.lastPerformance);
-      }
-      if (data.personalRecord) {
-        setPersonalRecord(data.personalRecord);
-      }
-    } catch (error) {
-      console.error("Failed to fetch exercise history:", error);
-    }
-  }
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);

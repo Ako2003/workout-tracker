@@ -3,6 +3,52 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const PRESET_FOODS: Array<{
+  nameEn: string;
+  nameRu: string;
+  caloriesPer100g: number;
+  proteinPer100g?: number;
+  carbsPer100g?: number;
+  fatPer100g?: number;
+}> = [
+  { nameEn: "Chicken breast", nameRu: "Куриная грудка", caloriesPer100g: 165, proteinPer100g: 31, carbsPer100g: 0, fatPer100g: 3.6 },
+  { nameEn: "Chicken thigh", nameRu: "Куриное бедро", caloriesPer100g: 209, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 11 },
+  { nameEn: "Lean beef", nameRu: "Говядина (постная)", caloriesPer100g: 217, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 12 },
+  { nameEn: "Salmon", nameRu: "Лосось", caloriesPer100g: 208, proteinPer100g: 20, carbsPer100g: 0, fatPer100g: 13 },
+  { nameEn: "Tuna (canned in water)", nameRu: "Тунец (в собственном соку)", caloriesPer100g: 116, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 1 },
+  { nameEn: "Egg", nameRu: "Яйцо", caloriesPer100g: 155, proteinPer100g: 13, carbsPer100g: 1.1, fatPer100g: 11 },
+  { nameEn: "Egg white", nameRu: "Яичный белок", caloriesPer100g: 52, proteinPer100g: 11, carbsPer100g: 0.7, fatPer100g: 0.2 },
+  { nameEn: "White rice (cooked)", nameRu: "Белый рис (варёный)", caloriesPer100g: 130, proteinPer100g: 2.7, carbsPer100g: 28, fatPer100g: 0.3 },
+  { nameEn: "Brown rice (cooked)", nameRu: "Бурый рис (варёный)", caloriesPer100g: 112, proteinPer100g: 2.6, carbsPer100g: 23, fatPer100g: 0.9 },
+  { nameEn: "Buckwheat (cooked)", nameRu: "Гречка (варёная)", caloriesPer100g: 110, proteinPer100g: 4, carbsPer100g: 20, fatPer100g: 1.1 },
+  { nameEn: "Oats (dry)", nameRu: "Овсянка (сухая)", caloriesPer100g: 389, proteinPer100g: 17, carbsPer100g: 66, fatPer100g: 7 },
+  { nameEn: "Pasta (cooked)", nameRu: "Макароны (варёные)", caloriesPer100g: 157, proteinPer100g: 5.8, carbsPer100g: 31, fatPer100g: 0.9 },
+  { nameEn: "Potato (boiled)", nameRu: "Картофель (варёный)", caloriesPer100g: 87, proteinPer100g: 1.9, carbsPer100g: 20, fatPer100g: 0.1 },
+  { nameEn: "Sweet potato", nameRu: "Батат", caloriesPer100g: 86, proteinPer100g: 1.6, carbsPer100g: 20, fatPer100g: 0.1 },
+  { nameEn: "Bread (white)", nameRu: "Хлеб (белый)", caloriesPer100g: 265, proteinPer100g: 9, carbsPer100g: 49, fatPer100g: 3.2 },
+  { nameEn: "Banana", nameRu: "Банан", caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 23, fatPer100g: 0.3 },
+  { nameEn: "Apple", nameRu: "Яблоко", caloriesPer100g: 52, proteinPer100g: 0.3, carbsPer100g: 14, fatPer100g: 0.2 },
+  { nameEn: "Orange", nameRu: "Апельсин", caloriesPer100g: 47, proteinPer100g: 0.9, carbsPer100g: 12, fatPer100g: 0.1 },
+  { nameEn: "Strawberry", nameRu: "Клубника", caloriesPer100g: 32, proteinPer100g: 0.7, carbsPer100g: 7.7, fatPer100g: 0.3 },
+  { nameEn: "Milk (2%)", nameRu: "Молоко 2%", caloriesPer100g: 50, proteinPer100g: 3.3, carbsPer100g: 5, fatPer100g: 2 },
+  { nameEn: "Greek yogurt", nameRu: "Греческий йогурт", caloriesPer100g: 59, proteinPer100g: 10, carbsPer100g: 3.6, fatPer100g: 0.4 },
+  { nameEn: "Cottage cheese", nameRu: "Творог", caloriesPer100g: 98, proteinPer100g: 11, carbsPer100g: 3.4, fatPer100g: 4.3 },
+  { nameEn: "Cheese", nameRu: "Сыр", caloriesPer100g: 402, proteinPer100g: 25, carbsPer100g: 1.3, fatPer100g: 33 },
+  { nameEn: "Olive oil", nameRu: "Оливковое масло", caloriesPer100g: 884, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 100 },
+  { nameEn: "Peanut butter", nameRu: "Арахисовая паста", caloriesPer100g: 588, proteinPer100g: 25, carbsPer100g: 20, fatPer100g: 50 },
+  { nameEn: "Almonds", nameRu: "Миндаль", caloriesPer100g: 579, proteinPer100g: 21, carbsPer100g: 22, fatPer100g: 50 },
+  { nameEn: "Walnuts", nameRu: "Грецкий орех", caloriesPer100g: 654, proteinPer100g: 15, carbsPer100g: 14, fatPer100g: 65 },
+  { nameEn: "Broccoli", nameRu: "Брокколи", caloriesPer100g: 34, proteinPer100g: 2.8, carbsPer100g: 7, fatPer100g: 0.4 },
+  { nameEn: "Spinach", nameRu: "Шпинат", caloriesPer100g: 23, proteinPer100g: 2.9, carbsPer100g: 3.6, fatPer100g: 0.4 },
+  { nameEn: "Carrot", nameRu: "Морковь", caloriesPer100g: 41, proteinPer100g: 0.9, carbsPer100g: 10, fatPer100g: 0.2 },
+  { nameEn: "Cucumber", nameRu: "Огурец", caloriesPer100g: 15, proteinPer100g: 0.7, carbsPer100g: 3.6, fatPer100g: 0.1 },
+  { nameEn: "Tomato", nameRu: "Помидор", caloriesPer100g: 18, proteinPer100g: 0.9, carbsPer100g: 3.9, fatPer100g: 0.2 },
+  { nameEn: "Avocado", nameRu: "Авокадо", caloriesPer100g: 160, proteinPer100g: 2, carbsPer100g: 9, fatPer100g: 15 },
+  { nameEn: "Whey protein", nameRu: "Протеин (сывороточный)", caloriesPer100g: 400, proteinPer100g: 80, carbsPer100g: 7, fatPer100g: 5 },
+  { nameEn: "Dark chocolate (85%)", nameRu: "Тёмный шоколад (85%)", caloriesPer100g: 598, proteinPer100g: 7.8, carbsPer100g: 46, fatPer100g: 43 },
+  { nameEn: "Honey", nameRu: "Мёд", caloriesPer100g: 304, proteinPer100g: 0.3, carbsPer100g: 82, fatPer100g: 0 },
+];
+
 const PRESET_EXERCISES: Record<MuscleGroup, string[]> = {
   [MuscleGroup.BICEPS]: [
     "Barbell Curl",
@@ -100,26 +146,96 @@ async function main() {
 
   console.log(`User created/updated: ${user.id}`);
 
-  // Delete existing preset exercises and recreate them
-  await prisma.exercise.deleteMany({
+  // Preset exercises — reconcile by name (userId=null is treated as DISTINCT by
+  // Postgres unique indexes, so we can't rely on upsert against the compound
+  // unique. Match by name manually and update-or-create.) Nothing is deleted,
+  // so historical WorkoutSets referencing a preset exercise stay intact.
+  const existingPresetExercises = await prisma.exercise.findMany({
     where: { isCustom: false, userId: null },
+    select: { id: true, name: true, muscleGroup: true },
   });
-
-  const exercisesToCreate = Object.entries(PRESET_EXERCISES).flatMap(
-    ([muscleGroup, exercises]) =>
-      exercises.map((name) => ({
-        name,
-        muscleGroup: muscleGroup as MuscleGroup,
-        isCustom: false,
-        userId: null,
-      }))
+  const existingExerciseByName = new Map(
+    existingPresetExercises.map((e) => [e.name, e])
   );
 
-  await prisma.exercise.createMany({
-    data: exercisesToCreate,
-  });
+  let exercisesCreated = 0;
+  let exercisesUpdated = 0;
+  for (const [muscleGroup, exercises] of Object.entries(PRESET_EXERCISES)) {
+    for (const name of exercises) {
+      const existing = existingExerciseByName.get(name);
+      if (!existing) {
+        await prisma.exercise.create({
+          data: {
+            name,
+            muscleGroup: muscleGroup as MuscleGroup,
+            isCustom: false,
+            userId: null,
+          },
+        });
+        exercisesCreated++;
+      } else if (existing.muscleGroup !== muscleGroup) {
+        await prisma.exercise.update({
+          where: { id: existing.id },
+          data: { muscleGroup: muscleGroup as MuscleGroup },
+        });
+        exercisesUpdated++;
+      }
+    }
+  }
+  console.log(
+    `Preset exercises: ${exercisesCreated} created, ${exercisesUpdated} updated`
+  );
 
-  console.log(`Created ${exercisesToCreate.length} preset exercises`);
+  // Preset foods — same reconcile-by-name approach. User-created foods and
+  // FoodEntries pointing at the preset catalog are left alone.
+  const existingPresetFoods = await prisma.food.findMany({
+    where: { isCustom: false, userId: null },
+  });
+  const existingFoodByName = new Map(
+    existingPresetFoods.map((f) => [f.nameEn, f])
+  );
+
+  let foodsCreated = 0;
+  let foodsUpdated = 0;
+  for (const f of PRESET_FOODS) {
+    const existing = existingFoodByName.get(f.nameEn);
+    const payload = {
+      nameRu: f.nameRu,
+      caloriesPer100g: f.caloriesPer100g,
+      proteinPer100g: f.proteinPer100g ?? null,
+      carbsPer100g: f.carbsPer100g ?? null,
+      fatPer100g: f.fatPer100g ?? null,
+    };
+    if (!existing) {
+      await prisma.food.create({
+        data: {
+          nameEn: f.nameEn,
+          ...payload,
+          isCustom: false,
+          userId: null,
+        },
+      });
+      foodsCreated++;
+    } else {
+      const changed =
+        existing.nameRu !== payload.nameRu ||
+        existing.caloriesPer100g !== payload.caloriesPer100g ||
+        existing.proteinPer100g !== payload.proteinPer100g ||
+        existing.carbsPer100g !== payload.carbsPer100g ||
+        existing.fatPer100g !== payload.fatPer100g;
+      if (changed) {
+        await prisma.food.update({
+          where: { id: existing.id },
+          data: payload,
+        });
+        foodsUpdated++;
+      }
+    }
+  }
+  console.log(
+    `Preset foods: ${foodsCreated} created, ${foodsUpdated} updated`
+  );
+
   console.log("Seeding complete!");
 }
 

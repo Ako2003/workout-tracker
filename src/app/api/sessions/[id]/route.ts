@@ -24,6 +24,7 @@ export async function GET(
           include: { exercise: true },
           orderBy: [{ exerciseId: "asc" }, { setNumber: "asc" }],
         },
+        run: true,
       },
     });
 
