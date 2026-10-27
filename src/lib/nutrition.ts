@@ -90,6 +90,26 @@ export function bmi(weightKg: number, heightCm: number): number {
   return weightKg / (m * m);
 }
 
+// Weight in kg for a given target BMI at a given height.
+function weightForBmi(targetBmi: number, heightCm: number): number {
+  const m = heightCm / 100;
+  return targetBmi * m * m;
+}
+
+// "Optimal" weight = midpoint of the healthy BMI range (BMI 22). Rounded to
+// the nearest 0.5 kg so the suggestion reads cleanly.
+export function optimalWeight(heightCm: number): number {
+  return Math.round(weightForBmi(22, heightCm) * 2) / 2;
+}
+
+// WHO healthy BMI range is 18.5–24.9; we clamp slightly in from the edges
+// (20–25) to avoid suggesting the extremes.
+export function healthyWeightRange(heightCm: number): [number, number] {
+  const lo = Math.round(weightForBmi(20, heightCm) * 2) / 2;
+  const hi = Math.round(weightForBmi(25, heightCm) * 2) / 2;
+  return [lo, hi];
+}
+
 export function bmiLabel(value: number): {
   label: string;
   tone: "muted" | "ok" | "warn" | "danger";

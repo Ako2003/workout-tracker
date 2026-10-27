@@ -23,7 +23,9 @@ import {
   bmr as bmrCalc,
   dailyKcalTarget,
   direction as directionFn,
+  healthyWeightRange,
   macroTargets,
+  optimalWeight,
   tdee as tdeeCalc,
   type ActivityLevel,
   type Direction,
@@ -391,6 +393,12 @@ export default function PlanPage() {
               step="0.1"
             />
           </div>
+          {height != null && height > 100 && (
+            <OptimalWeightHint
+              heightCm={height}
+              onApply={(kg) => setTargetWeightInput(kg.toString())}
+            />
+          )}
           <div className="grid grid-cols-2 gap-2">
             <LabeledNumber
               label="Height"
@@ -610,6 +618,43 @@ export default function PlanPage() {
           All settings
         </Link>
       </div>
+    </div>
+  );
+}
+
+function OptimalWeightHint({
+  heightCm,
+  onApply,
+}: {
+  heightCm: number;
+  onApply: (kg: number) => void;
+}) {
+  const optimal = optimalWeight(heightCm);
+  const [lo, hi] = healthyWeightRange(heightCm);
+  return (
+    <div className="rounded-lg border border-border bg-background-tertiary/40 px-3 py-2 flex items-center gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-foreground-muted">
+          Suggested target for {heightCm} cm
+        </p>
+        <p className="text-sm">
+          <span className="font-mono font-semibold">{optimal} kg</span>
+          <span className="text-foreground-muted">
+            {" "}
+            · healthy range{" "}
+            <span className="font-mono">
+              {lo}–{hi} kg
+            </span>
+          </span>
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onApply(optimal)}
+        className="h-8 px-3 rounded-md text-xs font-semibold bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
+      >
+        Use this
+      </button>
     </div>
   );
 }
