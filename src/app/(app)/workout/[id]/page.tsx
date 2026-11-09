@@ -15,6 +15,8 @@ interface Exercise {
   id: string;
   name: string;
   muscleGroup: string;
+  demoUrl: string | null;
+  formTip: string | null;
 }
 
 interface Set {

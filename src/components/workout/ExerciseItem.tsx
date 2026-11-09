@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Plus, Trash2, Trophy, History } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Trash2, Trophy, History, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SetRow } from "./SetRow";
@@ -35,6 +35,8 @@ interface ExerciseItemProps {
     id: string;
     name: string;
     muscleGroup: string;
+    demoUrl: string | null;
+    formTip: string | null;
   };
   sets: Set[];
   sessionId: string;
@@ -146,6 +148,28 @@ export function ExerciseItem({
         )}
       >
         <div className="px-4 pb-4 space-y-3">
+          {/* Form demo + tip */}
+          {(exercise.demoUrl || exercise.formTip) && (
+            <div className="space-y-1.5">
+              {exercise.demoUrl && (
+                <a
+                  href={exercise.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Watch form demo
+                </a>
+              )}
+              {exercise.formTip && (
+                <p className="text-xs text-foreground-muted leading-relaxed">
+                  {exercise.formTip}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Last Performance Info */}
           {lastPerformance && (
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background-tertiary/50 text-sm">

@@ -69,6 +69,8 @@ model Exercise {
   name        String
   muscleGroup MuscleGroup
   isCustom    Boolean     @default(false)
+  demoUrl     String?
+  formTip     String?
   userId      String?
   user        User?       @relation("UserExercises", fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime    @default(now())

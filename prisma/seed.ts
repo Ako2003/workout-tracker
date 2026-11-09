@@ -480,6 +480,145 @@ async function main() {
     `Preset templates: ${templatesCreated} created, ${templatesUpdated} updated, ${templatesSkipped} skipped`
   );
 
+  // Demo links + form tips — keyed by the exact DB name each entry maps to.
+  // For exercises that don't exist yet (warmups / stretches not in PRESET_EXERCISES),
+  // we create them here as non-custom preset rows (userId = null).
+  // For existing rows we only write demoUrl / formTip; nothing else changes.
+  const DEMO_DATA: Array<{
+    name: string;
+    muscleGroup: MuscleGroup;
+    demoUrl: string | null;
+    formTip: string;
+  }> = [
+    {
+      name: "Leg Swings",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=s7M3LK42crM",
+      formTip: "Keep the standing hip square; swing in a pure plane, no hip rotation.",
+    },
+    {
+      name: "Glute Bridge",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=OUgsJ8-Vi0E",
+      formTip: "Drive through glutes, not spine — don't hyperextend at the top.",
+    },
+    {
+      name: "Face Pulls",
+      muscleGroup: MuscleGroup.BACK,
+      demoUrl: "https://www.youtube.com/watch?v=V8dZ3pyiCBo",
+      formTip: "Pull to the face, not the neck — keep external rotation at the finish.",
+    },
+    {
+      name: "Bench Press",
+      muscleGroup: MuscleGroup.CHEST,
+      demoUrl: "https://www.youtube.com/watch?v=SCVCLChPQFY",
+      formTip: "Tuck elbows to ~45–75°, don't flare to 90°.",
+    },
+    {
+      name: "Lat Pulldown",
+      muscleGroup: MuscleGroup.BACK,
+      demoUrl: "https://www.youtube.com/watch?v=CAwf7n6Luuc",
+      formTip: "Stay near vertical, pull to upper chest — don't lean back and row it.",
+    },
+    {
+      name: "Goblet Squat",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=MxsFDhcyFyE",
+      formTip: "Heels down; elevate on plates if ankles tight. Knees track over toes.",
+    },
+    {
+      name: "Romanian Deadlift",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=JCXUYuzwNrM",
+      formTip: "Hinge from hip, stop at hamstring stretch — don't round the lower back.",
+    },
+    {
+      name: "Dumbbell Shoulder Press",
+      muscleGroup: MuscleGroup.SHOULDERS,
+      demoUrl: "https://www.youtube.com/watch?v=qEwKCR5JCog",
+      formTip: "Start at ear height, slight forward press path — don't flare elbows.",
+    },
+    {
+      name: "Pec deck fly (butterfly)",
+      muscleGroup: MuscleGroup.CHEST,
+      demoUrl: "https://www.youtube.com/watch?v=Z57CtFmRMxA",
+      formTip: "Slight elbow bend; stop at mild stretch, don't open past torso.",
+    },
+    {
+      name: "Tricep Pushdown",
+      muscleGroup: MuscleGroup.TRICEPS,
+      demoUrl: "https://www.youtube.com/watch?v=2-LAMcpzODU",
+      formTip: "Pin upper arms to sides — only the elbow joint moves.",
+    },
+    {
+      name: "Dead Bug",
+      muscleGroup: MuscleGroup.CORE,
+      demoUrl: "https://www.youtube.com/watch?v=4XLEnwUr1d8",
+      formTip: "Press lumbar spine flat to floor before moving the limbs.",
+    },
+    {
+      name: "Plank",
+      muscleGroup: MuscleGroup.CORE,
+      demoUrl: "https://www.youtube.com/watch?v=ASdvN_XEl_c",
+      formTip: "Squeeze glutes + abs; one line from ears to heels.",
+    },
+    {
+      name: "Hip Flexor Lunge Stretch",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=YQmpO9VT2X4",
+      formTip: "Posteriorly tilt the pelvis to actually open the hip flexor.",
+    },
+    {
+      name: "Seated Hamstring Stretch",
+      muscleGroup: MuscleGroup.LEGS,
+      demoUrl: "https://www.youtube.com/watch?v=YnOVRoX9DYQ",
+      formTip: "Hinge from hip with a flat back — don't round to reach the toes.",
+    },
+  ];
+
+  // Fetch existing preset exercises (userId=null) for name lookup.
+  // Custom exercises (userId != null) are looked up separately so we don't
+  // accidentally create a duplicate preset row for "Pec deck fly (butterfly)".
+  const allExercisesForDemo = await prisma.exercise.findMany({
+    select: { id: true, name: true, userId: true },
+  });
+  const exerciseByNameAll = new Map(
+    allExercisesForDemo.map((e) => [e.name.toLowerCase(), e])
+  );
+
+  let demoCreated = 0;
+  let demoUpdated = 0;
+  for (const entry of DEMO_DATA) {
+    const key = entry.name.toLowerCase();
+    const existing = exerciseByNameAll.get(key);
+    if (existing) {
+      await prisma.exercise.update({
+        where: { id: existing.id },
+        data: { demoUrl: entry.demoUrl, formTip: entry.formTip },
+      });
+      demoUpdated++;
+    } else {
+      // New exercise (warmup / stretch not in the original preset list).
+      // Created as a non-custom preset row (userId = null) so it appears in
+      // the global exercise catalogue alongside the other presets.
+      await prisma.exercise.create({
+        data: {
+          name: entry.name,
+          muscleGroup: entry.muscleGroup,
+          isCustom: false,
+          userId: null,
+          demoUrl: entry.demoUrl,
+          formTip: entry.formTip,
+        },
+      });
+      exerciseByNameAll.set(key, { id: "new", name: entry.name, userId: null });
+      demoCreated++;
+    }
+  }
+  console.log(
+    `Demo links + form tips: ${demoUpdated} updated, ${demoCreated} created`
+  );
+
   console.log("Seeding complete!");
 }
 

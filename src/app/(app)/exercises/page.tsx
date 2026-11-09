@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -14,6 +14,8 @@ interface Exercise {
   name: string;
   muscleGroup: string;
   isCustom: boolean;
+  demoUrl?: string | null;
+  formTip?: string | null;
 }
 
 const MUSCLE_GROUPS = [
@@ -248,17 +250,37 @@ function ExerciseCard({
 }) {
   return (
     <Card padding="md">
-      <CardContent className="flex items-center justify-between">
-        <div>
+      <CardContent className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <p className="font-medium">{exercise.name}</p>
           <Badge variant="muscle" muscleGroup={exercise.muscleGroup}>
             {exercise.muscleGroup.toLowerCase()}
           </Badge>
+          {(exercise.demoUrl || exercise.formTip) && (
+            <div className="mt-1.5 space-y-1">
+              {exercise.demoUrl && (
+                <a
+                  href={exercise.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Watch form demo
+                </a>
+              )}
+              {exercise.formTip && (
+                <p className="text-xs text-foreground-muted leading-relaxed">
+                  {exercise.formTip}
+                </p>
+              )}
+            </div>
+          )}
         </div>
         {onDelete && (
           <button
             onClick={onDelete}
-            className="p-2 rounded-lg text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors"
+            className="p-2 rounded-lg text-foreground-subtle hover:text-danger hover:bg-danger/10 transition-colors flex-shrink-0"
           >
             <Trash2 className="w-4 h-4" />
           </button>
